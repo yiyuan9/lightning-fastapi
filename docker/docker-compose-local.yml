@@ -1,0 +1,43 @@
+# Docker Compose Local Development Configuration File | Docker Compose 本地开发配置文件
+# For defining and running containerized applications in local development environment | 用于本地开发环境下定义和运行容器化应用
+#
+# Common commands: | 常用命令:
+# Start development environment:    docker compose -f docker/docker-compose-local.yml up -d | 启动开发环境:    docker compose -f docker/docker-compose-local.yml up -d
+# Stop development environment:     docker compose -f docker/docker-compose-local.yml down | 停止开发环境:    docker compose -f docker/docker-compose-local.yml down
+# View development logs:            docker compose -f docker/docker-compose-local.yml logs -f | 查看开发日志:    docker compose -f docker/docker-compose-local.yml logs -f
+# Rebuild development environment:  docker compose -f docker/docker-compose-local.yml build | 重新构建开发环境: docker compose -f docker/docker-compose-local.yml build
+# Restart development service:      docker compose -f docker/docker-compose-local.yml restart | 重启开发服务:    docker compose -f docker/docker-compose-local.yml restart
+#
+# Complete rebuild of development environment: | 完全重建开发环境:
+# docker compose -f docker/docker-compose-local.yml down
+# docker compose -f docker/docker-compose-local.yml build --no-cache
+#
+# Version note: | 版本说明:
+# version '3.8' supports Docker 19.03.0+ versions | version '3.8' 支持 Docker 19.03.0+ 版本
+
+# version: '3.8'
+
+services:
+  # FastAPI development service | FastAPI 开发服务
+  app:
+    image: lightning-fastapi-dev:latest
+    # Set development container name | 设置开发容器名称
+    container_name: lightning-fastapi-dev   # Development environment container name | 开发环境容器名称
+    # Build development container using current directory's Dockerfile | 使用当前目录的 Dockerfile 构建开发容器
+    build: 
+      context: ..
+      dockerfile: docker/Dockerfile
+    restart: always  # Automatically restart when development container crashes | 开发容器崩溃时自动重启
+    
+    # Port mapping configuration | 端口映射配置
+    # Map port 8000 of development container to port 8000 of host | 将开发容器的 8000 端口映射到主机的 8000 端口
+    ports:
+      - "8000:8000"
+    volumes:
+      - ../app:/WORKDIR/app
+    # Load local development environment variables | 加载本地开发环境变量
+    env_file:
+      - ../.env
+    
+    # Start development service | 启动开发服务
+    command: /WORKDIR/scripts/start.sh

@@ -1,0 +1,101 @@
+# .github/workflows/deploy-staging.yml
+name: Deploy to Staging
+
+on:
+  push:
+    branches:
+      - staging
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Debug - List all files
+      run: |
+        echo "🔍 Checking current directory... | 检查当前目录文件..."
+        echo "Current directory contents (including hidden files):"
+        ls -la
+        
+    - name: Create deployment package
+      run: |
+        echo "📦 Creating deployment package... | 开始打包部署文件..."
+        # Create temporary directory | 创建临时目录
+        echo "📁 Creating temporary directory... | 创建临时目录..."
+        mkdir ../temp_deploy
+        
+        # Copy files to temporary directory | 复制文件到临时目录
+        echo "📋 Copying files... | 复制文件..."
+        cp -a . ../temp_deploy/
+        
+        # Create compressed package | 创建压缩包
+        echo "🗜️ Creating archive... | 创建压缩包..."
+        cd ../temp_deploy
+        tar -czf ../package.tgz .
+        cd -
+        mv ../package.tgz .
+        
+        echo "✅ Package created. Contents: | 打包完成. 内容:"
+        tar -tvf package.tgz
+        
+    - name: Install SSH key
+      run: |
+        echo "🔑 Setting up SSH key... | 配置 SSH 密钥..."
+        mkdir -p ~/.ssh
+        echo "${{ secrets.DEPLOY_SSH_KEY }}" > ~/.ssh/id_rsa
+        chmod 600 ~/.ssh/id_rsa
+        ssh-keyscan -H ${{ secrets.SERVER_IP }} >> ~/.ssh/known_hosts
+        
+    - name: Transfer and extract package
+      run: |
+        echo "📤 Transferring files to server... | 传输文件到服务器..."
+        scp package.tgz ubuntu@${{ secrets.SERVER_IP }}:/home/ubuntu/app/package.tgz
+        
+        echo "📂 Extracting files... | 解压文件..."
+        ssh ubuntu@${{ secrets.SERVER_IP }} '
+          cd /home/ubuntu/fastapi-starter
+          echo "🗑️ Cleaning old files... | 清理旧文件..."
+          rm -rf * .[!.]*
+          echo "📨 Extracting new files... | 解压新文件..."
+          tar -xzf /home/ubuntu/app/package.tgz --strip-components=1
+          echo "📋 Showing extracted contents: | 显示解压内容:"
+          ls -la
+        '
+        
+    - name: Execute deployment script
+      run: |
+        echo "🚀 Starting deployment... | 开始部署..."
+        ssh ubuntu@${{ secrets.SERVER_IP }} '
+          # Ensure script is executable | 确保脚本可执行
+          echo "🔧 Setting script permissions... | 设置脚本权限..."
+          chmod +x /home/ubuntu/fastapi-starter/deploy.sh
+          
+          # Execute deployment script | 执行部署脚本
+          echo "▶️ Executing deployment script... | 执行部署脚本..."
+          cd /home/ubuntu/fastapi-starter
+          ./deploy.sh
+        '
+        
+    - name: Verify deployment
+      if: success()
+      run: |
+        echo "✅ Verifying deployment... | 验证部署..."
+        ssh ubuntu@${{ secrets.SERVER_IP }} '
+          echo "📁 Directory contents: | 目录内容:"
+          ls -la /home/ubuntu/fastapi-starter/
+          echo "📄 Checking .env file: | 检查环境变量文件:"
+          cat /home/ubuntu/fastapi-starter/.env.staging
+          echo "🐳 Docker containers: | Docker 容器状态:"
+          docker ps
+        '
+
+    - name: Cleanup
+      if: always()
+      run: |
+        echo "🧹 Cleaning up... | 清理临时文件..."
+        rm -f ~/.ssh/id_rsa
+        rm -rf ../temp_deploy
+        echo "✨ Deployment process completed | 部署流程结束"

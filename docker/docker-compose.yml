@@ -1,0 +1,43 @@
+# Docker Compose Production Configuration File | Docker Compose 生产环境配置文件
+# For defining and running containerized applications in production environment | 用于生产环境下定义和运行容器化应用
+#
+# Common commands: | 常用命令:
+# Start production environment:    docker compose up -d | 启动生产环境:    docker compose up -d
+# Stop production environment:     docker compose down | 停止生产环境:    docker compose down
+# View production logs:            docker compose logs -f | 查看生产日志:    docker compose logs -f
+# Rebuild production environment:  docker compose build | 重新构建生产环境: docker compose build
+# Restart production service:      docker compose restart | 重启生产服务:    docker compose restart
+#
+# Complete rebuild of production environment: | 完全重建生产环境:
+# docker compose down
+# docker compose build --no-cache
+#
+# Version note: | 版本说明:
+# version '3.8' supports Docker 19.03.0+ versions | version '3.8' 支持 Docker 19.03.0+ 版本
+
+# version: '3.8'
+
+services:
+  # FastAPI production service | FastAPI 生产服务
+  app:
+    image: lightning-fastapi-prod:latest
+    # Set production container name | 设置生产容器名称
+    container_name: lightning-fastapi   # Production environment container name | 生产环境容器名称
+    # Build production container using current directory's Dockerfile | 使用当前目录的 Dockerfile 构建生产容器
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    restart: always  # Automatically restart when production container crashes | 生产容器崩溃时自动重启
+    
+    # Port mapping configuration | 端口映射配置
+    # Map port 8000 of production container to port 8000 of host | 将生产容器的 8000 端口映射到主机的 8000 端口
+    ports:
+      - "8000:8000"
+      
+    # Load production environment variables | 加载生产环境变量
+    env_file:
+      - .env.staging
+
+    # Start production service | 启动生产服务
+    command: /WORKDIR/start.sh
+
