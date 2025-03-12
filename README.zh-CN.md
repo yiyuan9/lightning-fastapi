@@ -53,7 +53,7 @@
 
 ## 致谢
 
-特别感谢 [@liseami](https://github.com/liseami)
+特别感谢 [@liseami](https://github.com/liseami) 和 [@LZRight123](https://github.com/LZRight123)
 
 ## 特性
 

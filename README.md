@@ -52,7 +52,7 @@ This is a FastAPI-based backend starter project that provides complete user auth
 
 ## Acknowledgements
 
-Shoutout to [@liseami](https://github.com/liseami) for the inspiration.
+Shoutout to [@liseami](https://github.com/liseami) and [@LZRight123](https://github.com/LZRight123) for the inspiration.
 
 ## Features
 
